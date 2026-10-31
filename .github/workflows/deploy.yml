@@ -19,7 +19,9 @@ jobs:
           SSH_HOST: ${{ secrets.SSH_HOST }}
         run: |
           mkdir -p ~/.ssh
-          echo "$SSH_KEY" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
+          printf '%s
+' "$SSH_KEY" | tr -d '' > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keygen -y -f ~/.ssh/deploy_key > /dev/null || { echo "::error::SSH_KEY secret is not a valid private key"; exit 1; }
           ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
-          ssh ubuntu@"$SSH_HOST" '~/research/llm-security-gateway/deploy.sh'
+          ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes ubuntu@"$SSH_HOST" '~/research/llm-security-gateway/deploy.sh'
